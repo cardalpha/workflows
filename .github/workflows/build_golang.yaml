@@ -40,7 +40,7 @@ jobs:
         run: go mod tidy
 
       - name: test
-        run: go test
+        run: go test ./...
 
       - name: Go build
         run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o out/${{ inputs.service_name }}
