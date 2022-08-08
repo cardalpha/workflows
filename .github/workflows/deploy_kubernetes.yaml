@@ -54,9 +54,6 @@ jobs:
           gcloud components install kubectl
           gcloud container clusters get-credentials cardalpha-test-1 --project soy-enterprise-205311 --zone europe-west2-a
 
-      - name: Go build
-        run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o out/${SERVICE_NAME}
-
       - name: Determine new version type (major | minor | patch)
         id: new-version-type
         env:
