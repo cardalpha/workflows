@@ -27,7 +27,7 @@ jobs:
       - name: Download artifiact
         uses: actions/download-artifact@v3
         with:
-          name: ${{ inputs.artifact_name }} }}
+          name: ${{ inputs.artifact_name }}
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v0
