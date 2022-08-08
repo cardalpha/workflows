@@ -10,12 +10,12 @@ on:
         description: "Artifacts to upload"
         required: false
         type: string
-        default: false
+        default: ""
       artifact_path:
         description: "Artifacts to upload"
         required: false
         type: string
-        default: false
+        default: ""
     secrets:
       TEAM_PAT:
         required: true
@@ -50,7 +50,7 @@ jobs:
       - name: Go build
         run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o out/${{ inputs.service_name }}
 
-      - if: inputs.artifact_path != '' && inputs.artifact_name != ''
+      - if: ${{ inputs.artifact_path != '' && inputs.artifact_name != '' }}
         name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
