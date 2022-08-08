@@ -10,6 +10,11 @@ on:
         description: "Name of the artficat to download"
         required: true
         type: string
+      replicas:
+        description: "Name of the artficat to download"
+        required: true
+        type: number
+        default: 1
     secrets:
       TEAM_PAT:
         required: true
@@ -119,6 +124,7 @@ jobs:
             version=${{ steps.next-version.outputs.version }}
             env=-test
             test_env=true
+            replicas=${{ inputs.replicas }}
 
       - name: Setup service mesh
         run: |
