@@ -6,10 +6,15 @@ on:
         description: "Name of the microservice"
         required: true
         type: string
-      upload_artifact:
-        description: "Whether to upload artifact"
+      artifact_name:
+        description: "Artifacts to upload"
         required: false
-        type: boolean
+        type: string
+        default: false
+      artifact_path:
+        description: "Artifacts to upload"
+        required: false
+        type: string
         default: false
     secrets:
       TEAM_PAT:
@@ -45,9 +50,9 @@ jobs:
       - name: Go build
         run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o out/${{ inputs.service_name }}
 
-      - if: inputs.upload_artifact
+      - if: inputs.artifact_path != '' && inputs.artifact_name != ''
         name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          retention-days: 1
-          path: out/${{ inputs.service_name }}
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.artifact_path }}

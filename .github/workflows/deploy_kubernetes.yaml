@@ -1,0 +1,140 @@
+name: "[Shared] Deploy to kubernetes action"
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: "Name of the microservice"
+        required: true
+        type: string
+      artifact_name:
+        description: "Name of the artficat to download"
+        required: true
+        type: string
+    secrets:
+      TEAM_PAT:
+        required: true
+      GCLOUD_CONTAINER_REGISTERY_AUTH:
+        required: true
+env:
+  GOPRIVATE: github.com/cardalpha
+  GH_ACCESS_TOKEN: ${{ secrets.TEAM_PAT }}
+
+jobs:
+  kubernetes_deploy:
+    runs-on: ubuntu-latest
+    env:
+      SERVICE_NAME: ${{ inputs.service_name }}
+      GH_ACCESS_TOKEN: ${{ secrets.TEAM_PAT }}
+      GCLOUD_CONTAINER_REGISTERY_AUTH: ${{ secrets.GCLOUD_CONTAINER_REGISTERY_AUTH }}
+    steps:
+      - name: Download artifiact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.artifact_name }} }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: ${{ secrets.GCLOUD_CONTAINER_REGISTERY_AUTH }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+
+      - name: Authenticate docker
+        run: gcloud auth configure-docker
+
+      - name: Setup cache
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
+        with:
+          key: ca-protos-{hash}
+          restore-keys: |
+            ca-protos-
+
+      - name: Setup Kubernetes
+        run: |
+          gcloud components install kubectl
+          gcloud container clusters get-credentials cardalpha-test-1 --project soy-enterprise-205311 --zone europe-west2-a
+
+      - name: Go build
+        run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o out/${SERVICE_NAME}
+
+      - name: Determine new version type (major | minor | patch)
+        id: new-version-type
+        env:
+          COMMIT_MSG: ${{ github.event.commits[0].message }}
+        run: |
+          NEW_VERSION_TYPE='patch'
+          if [[ $COMMIT_MSG == feat:* ]] || [[ $COMMIT_MSG == feat\(* ]];
+          then
+          NEW_VERSION_TYPE='minor'
+          fi
+          if [[ $COMMIT_MSG =~ "BREAKING CHANGE" ]];
+          then
+          NEW_VERSION_TYPE='major'
+          fi
+          echo "::set-output name=version_type::$NEW_VERSION_TYPE"
+
+      - id: next-version
+        name: Get next version
+        run: |
+          VERSION=${{ steps.new-version-type.outputs.version_type}}
+          echo "Getting next version for service: ${SERVICE_NAME}"
+          CURRENT_VERSION=`kubectl get deployment ${SERVICE_NAME} -o wide | grep app= | awk -F ' ' '{print $7}' | awk -F '/' '{print $4}' | awk -F ':' '{print $2}'`
+          echo "Current version is: ${CURRENT_VERSION}"
+          #replace . with space so can split into an array
+          CURRENT_VERSION_PARTS=(${CURRENT_VERSION//./ })
+
+          #get number parts
+          VNUM1=${CURRENT_VERSION_PARTS[0]}
+          VNUM2=${CURRENT_VERSION_PARTS[1]}
+          VNUM3=${CURRENT_VERSION_PARTS[2]}
+
+          if [[ $VERSION == 'major' ]]
+          then
+            VNUM1=$((VNUM1+1))
+          elif [[ $VERSION == 'minor' ]]
+          then
+            VNUM2=$((VNUM2+1))
+          elif [[ $VERSION == 'patch' ]]
+          then
+            VNUM3=$((VNUM3+1))
+          else
+            VNUM3=$((VNUM3+1))
+          fi
+          NEW_VERSION="$VNUM1.$VNUM2.$VNUM3"
+          echo "New version: $NEW_VERSION"
+          echo "::set-output name=version::$NEW_VERSION"
+
+      - name: Deploy container
+        run: |
+          DOCKER_TAG=cardalpha/${SERVICE_NAME}:${{ steps.next-version.outputs.version }}
+          DOCKER_REPOSITORY=eu.gcr.io/soy-enterprise-205311
+          docker build -t ${DOCKER_TAG} .
+          docker tag ${DOCKER_TAG} ${DOCKER_REPOSITORY}/${DOCKER_TAG}
+          docker push ${DOCKER_REPOSITORY}/${DOCKER_TAG}
+
+      - name: Update deployment file
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: deployment/deployment.yml.j2
+          output_file: deployment/deployment.yml
+          strict: true
+          variables: |
+            version=${{ steps.next-version.outputs.version }}
+            env=-test
+            test_env=true
+
+      - name: Setup service mesh
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
+          export PATH=$PATH:/home/runner/.linkerd2/bin
+          linkerd version
+          linkerd inject deployment/deployment.yml --skip-outbound-ports=4222,6222,8222,26257,6443 --skip-inbound-ports=8081 | cat - > deployment/temp.yml
+          rm deployment/deployment.yml
+          mv deployment/temp.yml deployment/deployment.yml
+          cat deployment/deployment.yml
+
+      - name: Apply deployment
+        run: kubectl apply -f deployment/deployment.yml
