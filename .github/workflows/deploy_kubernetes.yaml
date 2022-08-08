@@ -34,6 +34,9 @@ jobs:
         with:
           name: ${{ inputs.artifact_name }}
 
+      - name: Setup permissions
+        run: chmod +x out/${{ inputs.service_name }}
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v0
         with:
