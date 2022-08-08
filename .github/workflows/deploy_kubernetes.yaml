@@ -16,16 +16,13 @@ on:
       GCLOUD_CONTAINER_REGISTERY_AUTH:
         required: true
 env:
-  GOPRIVATE: github.com/cardalpha
+  SERVICE_NAME: ${{ inputs.service_name }}
   GH_ACCESS_TOKEN: ${{ secrets.TEAM_PAT }}
+  GCLOUD_CONTAINER_REGISTERY_AUTH: ${{ secrets.GCLOUD_CONTAINER_REGISTERY_AUTH }}
 
 jobs:
   kubernetes_deploy:
     runs-on: ubuntu-latest
-    env:
-      SERVICE_NAME: ${{ inputs.service_name }}
-      GH_ACCESS_TOKEN: ${{ secrets.TEAM_PAT }}
-      GCLOUD_CONTAINER_REGISTERY_AUTH: ${{ secrets.GCLOUD_CONTAINER_REGISTERY_AUTH }}
     steps:
       - name: Download artifiact
         uses: actions/download-artifact@v3
