@@ -45,7 +45,7 @@ jobs:
       - name: Go build
         run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o out/${{ inputs.service_name }}
 
-      - if: inputs.upload-artifact
+      - if: inputs.upload_artifact
         name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
