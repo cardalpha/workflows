@@ -127,6 +127,7 @@ jobs:
             version=${{ steps.next-version.outputs.version }}
             env=-test
             test_env=true
+            mock=true
             replicas=${{ inputs.replicas }}
 
       - name: Setup service mesh
