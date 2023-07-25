@@ -121,6 +121,9 @@ jobs:
             mock=true
             replicas=${{ inputs.replicas }}
 
+      - name: List deployment file
+        run: cat deployment/deployment.yml
+
       - name: Setup service mesh
         run: |
           curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
