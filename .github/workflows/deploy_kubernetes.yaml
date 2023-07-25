@@ -135,4 +135,6 @@ jobs:
           cat deployment/deployment.yml
 
       - name: Apply deployment
-        run: kubectl apply -f deployment/deployment.yml
+        run: |
+          cat deployment/deployment.yml
+          kubectl apply -f deployment/deployment.yml
