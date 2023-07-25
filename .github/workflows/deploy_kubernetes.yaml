@@ -1,17 +1,17 @@
-name: "[Shared] Deploy to kubernetes action"
+name: '[Shared] Deploy to kubernetes action'
 on:
   workflow_call:
     inputs:
       service_name:
-        description: "Name of the microservice"
+        description: 'Name of the microservice'
         required: true
         type: string
       artifact_name:
-        description: "Name of the artficat to download"
+        description: 'Name of the artficat to download'
         required: true
         type: string
       replicas:
-        description: "Name of the artficat to download"
+        description: 'Name of the artficat to download'
         required: false
         type: number
         default: 1
@@ -38,24 +38,15 @@ jobs:
         run: chmod +x out/${{ inputs.service_name }}
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v0
+        uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCLOUD_CONTAINER_REGISTERY_AUTH }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v0
+        uses: google-github-actions/setup-gcloud@v1
 
       - name: Authenticate docker
         run: gcloud auth configure-docker
-
-      - name: Setup cache
-        uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
-        with:
-          key: ca-protos-{hash}
-          restore-keys: |
-            ca-protos-
 
       - name: Setup Kubernetes
         run: |
