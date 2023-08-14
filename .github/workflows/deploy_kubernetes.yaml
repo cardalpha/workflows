@@ -124,15 +124,15 @@ jobs:
       - name: List deployment file
         run: cat deployment/deployment.yml
 
-      # - name: Setup service mesh
-      #   run: |
-      #     curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
-      #     export PATH=$PATH:/home/runner/.linkerd2/bin
-      #     linkerd version
-      #     linkerd inject deployment/deployment.yml --skip-outbound-ports=4222,6222,8222,26257,6443 --skip-inbound-ports=8081 | cat - > deployment/temp.yml
-      #     rm deployment/deployment.yml
-      #     mv deployment/temp.yml deployment/deployment.yml
-      #     cat deployment/deployment.yml
+      - name: Setup service mesh
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
+          export PATH=$PATH:/home/runner/.linkerd2/bin
+          linkerd version
+          linkerd inject deployment/deployment.yml --skip-outbound-ports=4222,6222,8222,26257,6443 --skip-inbound-ports=8081 | cat - > deployment/temp.yml
+          rm deployment/deployment.yml
+          mv deployment/temp.yml deployment/deployment.yml
+          cat deployment/deployment.yml
 
       - name: Apply deployment
         run: |
