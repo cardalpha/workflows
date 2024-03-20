@@ -103,7 +103,7 @@ jobs:
       - name: Deploy container
         run: |
           DOCKER_TAG=cardalpha/${SERVICE_NAME}:${{ steps.next-version.outputs.version }}
-          DOCKER_REPOSITORY=eu.gcr.io/soy-enterprise-205311
+          DOCKER_REPOSITORY=europe-west2-docker.pkg.dev/soy-enterprise-205311
           docker build -t ${DOCKER_TAG} .
           docker tag ${DOCKER_TAG} ${DOCKER_REPOSITORY}/${DOCKER_TAG}
           docker push ${DOCKER_REPOSITORY}/${DOCKER_TAG}
