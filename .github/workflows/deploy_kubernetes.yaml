@@ -46,7 +46,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
 
       - name: Authenticate docker
-        run: gcloud auth configure-docker
+        run: gcloud auth configure-docker europe-west2-docker.pkg.dev
 
       - name: Setup Kubernetes
         run: |
